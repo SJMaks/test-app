@@ -11,6 +11,8 @@ import {
 
 import { MATCHES_URL } from '../config';
 import { UpdatedAgo } from '../components/UpdatedAgo';
+import { FavoriteButton } from '../components/FavoriteButton';
+import { useFavorites } from '../hooks/useFavorites';
 
 type Team = {
   id: string;
@@ -67,7 +69,15 @@ function formatStartsAt(startsAt: string | null): string {
   });
 }
 
-function MatchCard({ match }: { match: Match }) {
+function MatchCard({
+  match,
+  isFavorite,
+  onToggle,
+}: {
+  match: Match;
+  isFavorite: boolean;
+  onToggle: () => void;
+}) {
   const score = match.score
     ? `${match.score.home} : ${match.score.away}`
     : '—';
@@ -78,6 +88,7 @@ function MatchCard({ match }: { match: Match }) {
         <Text style={styles.team}>{match.home.name}</Text>
         <Text style={styles.score}>{score}</Text>
         <Text style={styles.team}>{match.away.name}</Text>
+        <FavoriteButton active={isFavorite} onPress={onToggle} />
       </View>
       <View style={styles.bottom}>
         <Text style={styles.time}>{formatStartsAt(match.startsAt)}</Text>
@@ -90,6 +101,7 @@ function MatchCard({ match }: { match: Match }) {
 }
 
 export function MatchesScreen() {
+  const { isFavorite, toggle } = useFavorites();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,7 +196,13 @@ export function MatchesScreen() {
       <FlatList
         data={filteredMatches}
         keyExtractor={match => match.id}
-        renderItem={({ item }) => <MatchCard match={item} />}
+        renderItem={({ item }) => (
+          <MatchCard
+            match={item}
+            isFavorite={isFavorite(item.id)}
+            onToggle={() => toggle(item.id)}
+          />
+        )}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
